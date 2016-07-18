@@ -10,11 +10,11 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"version"
 
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/dbutil"
 	"github.com/cyverse-de/logcabin"
+	"github.com/cyverse-de/version"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/olebedev/config"
