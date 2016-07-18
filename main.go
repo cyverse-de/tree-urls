@@ -1,19 +1,19 @@
 package main
 
 import (
-	"configurate"
 	"database/sql"
-	"dbutil"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"logcabin"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 
+	"github.com/cyverse-de/configurate"
+	"github.com/cyverse-de/dbutil"
+	"github.com/cyverse-de/logcabin"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/olebedev/config"
