@@ -1,14 +1,10 @@
-FROM jeanblanchard/alpine-glibc
-
-ADD tree-urls /bin/tree-urls
+FROM golang:1.6-alpine
 
 ARG git_commit=unknown
-ARG buildenv_git_commit=unknown
-ARG version=unknown
-LABEL org.iplantc.de.user-preferences.git-ref="$git_commit" \
-      org.iplantc.de.user-preferences.version="$version" \
-      org.iplantc.de.buildenv.git-ref="$buildenv_git_commit"
+LABEL org.cyverse.git-ref="$git_commit"
 
-EXPOSE 60000
+COPY . /go/src/github.com/cyverse-de/tree-urls
+RUN go install github.com/cyverse-de/tree-urls
+
 ENTRYPOINT ["tree-urls"]
 CMD ["--help"]
