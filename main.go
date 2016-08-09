@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	_ "expvar"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -162,6 +163,7 @@ func New(db Databaser) *TreeURLs {
 	router.HandleFunc("/{sha1}", t.Post).Methods("PUT")
 	router.HandleFunc("/{sha1}", t.Post).Methods("POST")
 	router.HandleFunc("/{sha1}", t.Delete).Methods("DELETE")
+	router.Handle("/debug/vars", http.DefaultServeMux)
 	return t
 }
 
