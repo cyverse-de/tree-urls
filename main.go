@@ -17,7 +17,7 @@ import (
 	"github.com/cyverse-de/logcabin"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-	"github.com/olebedev/config"
+	"github.com/spf13/viper"
 )
 
 func badRequest(writer http.ResponseWriter, msg string) {
@@ -359,7 +359,7 @@ func main() {
 		cfgPath     = flag.String("config", "/etc/iplant/de/jobservices.yml", "The path to the config file")
 		port        = flag.String("port", "60000", "The port number to listen on")
 		err         error
-		cfg         *config.Config
+		cfg         *viper.Viper
 	)
 
 	flag.Parse()
@@ -373,15 +373,11 @@ func main() {
 		logcabin.Error.Fatal("--config must be set")
 	}
 
-	if cfg, err = configurate.Init(*cfgPath); err != nil {
+	if cfg, err = configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults); err != nil {
 		logcabin.Error.Fatal(err)
 	}
 
-	dburi, err := cfg.String("db.uri")
-	if err != nil {
-		logcabin.Error.Fatal(err)
-	}
-
+	dburi := cfg.GetString("db.uri")
 	connector, err := dbutil.NewDefaultConnector("1m")
 	if err != nil {
 		logcabin.Error.Fatal(err)
