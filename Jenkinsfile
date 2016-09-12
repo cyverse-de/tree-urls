@@ -1,3 +1,4 @@
+#!groovy
 def repo = "tree-urls"
 def dockerUser = "discoenv"
 
