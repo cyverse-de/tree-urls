@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 type MockDB struct {
@@ -466,5 +468,163 @@ func TestFixAddrWithPrefix(t *testing.T) {
 	actual := fixAddr(":70000")
 	if actual != expected {
 		t.Fail()
+	}
+}
+
+func TestNewPostgresDB(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("error creating the mock db: %s", err)
+	}
+	defer db.Close()
+
+	p := NewPostgresDB(db)
+	if p == nil {
+		t.Errorf("error from NewPostgresDB(): %s", err)
+	}
+
+	if p.db != db {
+		t.Error("dbs did not match")
+	}
+}
+
+func TestHasSHA1(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("error creating the mock db: %s", err)
+	}
+	defer db.Close()
+
+	p := NewPostgresDB(db)
+	if p == nil {
+		t.Error("NewPostgresDB() returned nil")
+	}
+
+	mock.ExpectQuery("SELECT EXISTS\\(SELECT 1 FROM tree_urls WHERE sha1 =").
+		WithArgs("sha1").
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+	hasSHA1, err := p.hasSHA1("sha1")
+	if err != nil {
+		t.Errorf("error from hasSHA1(): %s", err)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations were not met: %s", err)
+	}
+
+	if !hasSHA1 {
+		t.Error("hasSHA1() returned false")
+	}
+}
+
+func TestGetTreeURLs(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("error creating the mock db: %s", err)
+	}
+	defer db.Close()
+
+	p := NewPostgresDB(db)
+	if p == nil {
+		t.Error("NewPostgresDB returned nil")
+	}
+
+	mock.ExpectQuery("SELECT tree_urls FROM tree_urls WHERE sha1 =").
+		WithArgs("sha1").
+		WillReturnRows(sqlmock.NewRows([]string{"tree_urls"}).AddRow("{}"))
+
+	records, err := p.getTreeURLs("sha1")
+	if err != nil {
+		t.Errorf("error from getTreeURLs(): %s", err)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations were not met: %s", err)
+	}
+
+	if len(records) != 1 {
+		t.Errorf("number of records returned was %d instead of 1", len(records))
+	}
+
+	treeurl := records[0]
+
+	if treeurl != "{}" {
+		t.Errorf("tree url was %s instead of '{}'", treeurl)
+	}
+}
+
+func TestInsertTreeURLs(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("error creating the mock db: %s", err)
+	}
+	defer db.Close()
+
+	p := NewPostgresDB(db)
+	if p == nil {
+		t.Error("NewPostgresDB returned nil")
+	}
+
+	mock.ExpectExec("INSERT INTO tree_urls \\(sha1, tree_urls\\) VALUES").
+		WithArgs("sha1", "{}").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	if err = p.insertTreeURLs("sha1", "{}"); err != nil {
+		t.Errorf("error inserting tree urls: %s", err)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations were not met: %s", err)
+	}
+}
+
+func TestUpdateTreeURLs(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("error creating the mock db: %s", err)
+	}
+	defer db.Close()
+
+	p := NewPostgresDB(db)
+	if p == nil {
+		t.Error("NewPostgresDB returned nil")
+	}
+
+	mock.ExpectExec("UPDATE ONLY tree_urls SET tree_urls =").
+		WithArgs("sha1", "{}").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	if err = p.updateTreeURLs("sha1", "{}"); err != nil {
+		t.Errorf("error updating tree urls: %s", err)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations were not met: %s", err)
+	}
+}
+
+func TestDeleteTreeURLs(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("error creating the mock db: %s", err)
+	}
+	defer db.Close()
+
+	p := NewPostgresDB(db)
+	if p == nil {
+		t.Error("NewPostgresDB() returned nil")
+	}
+
+	mock.ExpectExec("DELETE FROM tree_urls WHERE sha1 =").
+		WithArgs("sha1").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	if err = p.deleteTreeURLs("sha1"); err != nil {
+		t.Errorf("error deleting tree urls: %s", err)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations were not met: %s", err)
 	}
 }
