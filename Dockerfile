@@ -16,3 +16,6 @@ COPY . /go/src/github.com/cyverse-de/tree-urls
 RUN go install -v -ldflags "-X main.appver=$version -X main.gitref=$git_commit" github.com/cyverse-de/tree-urls
 
 EXPOSE 60000
+LABEL org.label-schema.vcs-ref="$git_commit"
+LABEL org.label-schema.vcs-url="https://github.com/cyverse-de/tree-urls"
+LABEL org.label-schema.version="$descriptive_version"
